@@ -1,11 +1,22 @@
 """schemas.py — Pydantic models"""
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
+import json
+
+
+def _parse_json(v):
+    """Auto-parse JSON strings from DB"""
+    if isinstance(v, str):
+        try:
+            return json.loads(v)
+        except (json.JSONDecodeError, TypeError):
+            return v
+    return v
 
 
 class ArticleIn(BaseModel):
-    """Hermes → FastAPI internal push"""
+    """Hermes -> FastAPI internal push"""
     url: str
     title: str
     content_md: Optional[str] = None
@@ -44,8 +55,12 @@ class ArticleOut(BaseModel):
     importance: Optional[str] = None
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
+    @field_validator('tags', 'entities', mode='before')
+    @classmethod
+    def parse_json_fields(cls, v):
+        return _parse_json(v)
 
 
 class ArticleDetail(ArticleOut):
@@ -54,6 +69,11 @@ class ArticleDetail(ArticleOut):
     analysis: Optional[dict] = None
     key_points: Optional[list] = None
     extraction_method: Optional[str] = None
+
+    @field_validator('analysis', 'key_points', mode='before')
+    @classmethod
+    def parse_detail_json(cls, v):
+        return _parse_json(v)
 
 
 class ArticleList(BaseModel):
