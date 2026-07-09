@@ -4,6 +4,7 @@ import Detail from '../views/Detail.vue'
 import Search from '../views/Search.vue'
 import Category from '../views/Category.vue'
 import Login from '../views/Login.vue'
+import Admin from '../views/Admin.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -11,6 +12,7 @@ const routes = [
   { path: '/search', name: 'Search', component: Search },
   { path: '/category/:name', name: 'Category', component: Category },
   { path: '/login', name: 'Login', component: Login },
+  { path: '/admin', name: 'Admin', component: Admin },
 ]
 
 export default createRouter({

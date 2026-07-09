@@ -1,10 +1,11 @@
 """routes/news.py — 新闻查询接口"""
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Header, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from database import get_db
-from models import Article
+from models import Article, User
 from schemas import ArticleOut, ArticleDetail, ArticleList
+from routes.auth import SECRET_KEY, ALGORITHM
 
 router = APIRouter(prefix="/news", tags=["news"])
 
@@ -74,13 +75,38 @@ def latest_news(limit: int = Query(20, ge=1, le=50), db: Session = Depends(get_d
 
 
 @router.get("/{article_id}", response_model=ArticleDetail)
-def get_news(article_id: int, db: Session = Depends(get_db)):
-    """新闻详情（含正文）"""
+def get_news(
+    article_id: int,
+    db: Session = Depends(get_db),
+    # Optional auth — VIP gets full content, free gets summary only
+    authorization: str = Header(None),
+):
+    """新闻详情 — VIP 用户获取全文，免费用户仅摘要"""
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Not found")
-    return ArticleDetail.model_validate(article)
+
+    result = ArticleDetail.model_validate(article)
+
+    # 检查用户等级
+    is_vip = False
+    if authorization and authorization.startswith("Bearer "):
+        try:
+            from jose import jwt
+            payload = jwt.decode(authorization[7:], SECRET_KEY, algorithms=[ALGORITHM])
+            user = db.query(User).filter(User.id == int(payload.get("sub"))).first()
+            if user and user.level in ("vip", "admin"):
+                is_vip = True
+        except Exception:
+            pass
+
+    # 免费用户：隐藏正文，只保留摘要
+    if not is_vip:
+        result.content_md = None
+        result.analysis = None
+        result.key_points = None
+
+    return result
 
 
 @router.get("/search", response_model=ArticleList)

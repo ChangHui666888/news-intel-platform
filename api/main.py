@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from routes import news, internal, categories, auth
+from routes import news, internal, categories, auth, admin, ads
 
 # 建表
 Base.metadata.create_all(bind=engine)
@@ -25,6 +25,8 @@ app.include_router(internal.router)
 app.include_router(news.router)
 app.include_router(categories.router)
 app.include_router(auth.router)
+app.include_router(admin.router)
+app.include_router(ads.router)
 
 
 @app.get("/")
