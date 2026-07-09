@@ -1,0 +1,12 @@
+# News Intelligence Platform
+# AI驱动的新闻智能平台
+# 本地: Hermes (RSS+评分+抓取+AI增强)
+# 云端: FastAPI + PostgreSQL + Vue
+
+__pycache__/
+*.pyc
+.env
+*.db
+node_modules/
+dist/
+.DS_Store
